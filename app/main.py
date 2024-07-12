@@ -23,7 +23,7 @@ def main():
         method, path, version = request_line.split(" ")
 
         # Responses
-        if path == "/index.html":
+        if path == "/":
             response = b"HTTP/1.1 200 OK\r\n\r\n"
         else:
             response = b"HTTP/1.1 200 OK\r\n\r\n"

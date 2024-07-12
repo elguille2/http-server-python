@@ -26,7 +26,7 @@ def main():
         if path == "/":
             response = b"HTTP/1.1 200 OK\r\n\r\n"
         else:
-            response = b"HTTP/1.1 200 OK\r\n\r\n"
+            response = b"HTTP/1.1 404 OK\r\n\r\n"
 
         # Send the response
         connection.sendall(response)

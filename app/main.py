@@ -15,6 +15,16 @@ def handle_request(request):
             b"\r\n" # Empty line
             + response_body                                                   
         )
+    elif path.startswith("/user-agent"):
+        user_agent = request.split("User-Agent: ")[1].split("\r\n")[0]
+        response_body = user_agent.encode("utf-8")
+        response = (
+            b"HTTP/1.1 200 OK\r\n"          # Status Line
+            b"Content-Type: text/plain\r\n"                                             # Headers
+            b"Content-Length: " + str(len(response_body)).encode("utf-8") + b"\r\n"     # Headers
+            b"\r\n" # Empty line
+            + response_body                                                   
+        )
     elif path == "/":
         response = b"HTTP/1.1 200 OK\r\n\r\n"
     else:

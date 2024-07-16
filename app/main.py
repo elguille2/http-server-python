@@ -21,16 +21,18 @@ def main():
 
         # Extract the path
         method, path, version = request_line.split(" ")
-        message = path.split("/")[1]
+        
 
         # Responses
-        if path == "/" or path == "/echo":
+        if path .__contains__("/echo/"):
+            message = path.split("/")[2]
+            response = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + str(len(message.encode("utf-8"))).encode("utf-8") + b"\r\n\r\n" + message.encode("utf-8")
+        elif path == "/":
             response = b"HTTP/1.1 200 OK\r\n\r\n"
         else:
             response = b"HTTP/1.1 404 Not Found\r\n\r\n"
 
-        # Send the response
-        connection.body = message   
+        # Send the response 
         connection.sendall(response)
         connection.close()
 

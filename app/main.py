@@ -1,4 +1,5 @@
 import socket
+import threading
 
 def handle_request(request):
     """Parse the HTTP request and return the aproppiate response"""
@@ -32,6 +33,20 @@ def handle_request(request):
 
     return response
 
+def handle_connection(connection):
+    """Handle a single connections"""
+    try:
+        # Read the request
+        request = connection.recv(1024).decode("utf-8")
+        print(f"Received request: {request}")
+
+        response = handle_request(request)
+        connection.sendall(response)
+    except Exception as e:
+        print(f"Error handling request: {e}")
+    finally:
+        connection.close()
+
 def start_server(host, port):
     """Start the HTTP server and handle incoming connections"""
     server_socket = socket.create_server((host, port), reuse_port=True)
@@ -40,13 +55,10 @@ def start_server(host, port):
     while True:
         # Accept a connection
         connection, address = server_socket.accept()
-        # Read the request
-        request = connection.recv(1024).decode("utf-8")
-        print(f"Received request: {request}")
-
-        response = handle_request(request)
-        connection.sendall(response)
-        connection.close()
+        # Create a new thread to handle the connection
+        thread = threading.Thread(target=handle_connection, args=(connection,))
+        thread.start()               
+        
 
 def main():
     print("Logs from your program will appear here!")

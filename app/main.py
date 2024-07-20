@@ -8,13 +8,24 @@ def handle_request(request, connection, files_directory):
     request_line = request.split("\r\n")[0]
     method, path, version = request_line.split(" ")
 
+    # Check if the request has an Accept-Encoding header
+    headers = request.split("\r\n\r\n")[0].split("\r\n")[1:]
+    accept_encoding = ""
+    for header in headers:
+        if header.startswith("Accept-Encoding:"):
+            accept_encoding = header.split(":")[1].strip()
+            break
+    
+    use_gzip = "gzip" in accept_encoding
+
     if path.startswith("/echo/"):
         message = path[len("/echo/"):]
         response_body = message.encode("utf-8")
         response = (
             b"HTTP/1.1 200 OK\r\n"          # Status Line
-            b"Content-Type: text/plain\r\n"                                             
-            b"Content-Length: " + str(len(response_body)).encode("utf-8") + b"\r\n"     
+            b"Content-Type: text/plain\r\n"  
+            + (b"Content-Encoding: gzip\r\n" if use_gzip else b"")                                             
+            + b"Content-Length: " + str(len(response_body)).encode("utf-8") + b"\r\n"     
             b"\r\n" # Empty line
             + response_body                                                   
         )
@@ -23,11 +34,12 @@ def handle_request(request, connection, files_directory):
         response_body = user_agent.encode("utf-8")
         response = (
             b"HTTP/1.1 200 OK\r\n"          # Status Line
-            b"Content-Type: text/plain\r\n"                                             
+            b"Content-Type: text/plain\r\n"                                           
             b"Content-Length: " + str(len(response_body)).encode("utf-8") + b"\r\n"     
             b"\r\n" # Empty line
             + response_body                                                   
         )
+    
     elif path.startswith("/files/"):
         filename = path[len("/files/"):]
         file_path = os.path.join(files_directory, filename) # Build the path to the file

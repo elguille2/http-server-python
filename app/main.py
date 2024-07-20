@@ -2,6 +2,8 @@ import socket
 import threading
 import argparse
 import os
+import gzip
+import io
 
 def handle_request(request, connection, files_directory):
     """Parse the HTTP request and return the aproppiate response"""
@@ -21,14 +23,30 @@ def handle_request(request, connection, files_directory):
     if path.startswith("/echo/"):
         message = path[len("/echo/"):]
         response_body = message.encode("utf-8")
-        response = (
-            b"HTTP/1.1 200 OK\r\n"          # Status Line
-            b"Content-Type: text/plain\r\n"  
-            + (b"Content-Encoding: gzip\r\n" if use_gzip else b"")                                             
-            + b"Content-Length: " + str(len(response_body)).encode("utf-8") + b"\r\n"     
-            b"\r\n" # Empty line
-            + response_body                                                   
-        )
+
+        if use_gzip:
+            # Compress the response body using gzip
+            buffer = io.BytesIO()
+            with gzip.GzipFile(fileobj=buffer, mode="w") as file:
+                file.write(response_body)
+            compressed_body = buffer.getvalue()
+            # Create the response with the compressed body
+            response = (
+                b"HTTP/1.1 200 OK\r\n"          # Status Line
+                b"Content-Type: text/plain\r\n"
+                b"Content-Encoding: gzip\r\n"
+                b"Content-Length: " + str(len(compressed_body)).encode("utf-8") + b"\r\n"
+                b"\r\n" # Empty line
+                + compressed_body
+            )
+        else:
+            response = (
+                b"HTTP/1.1 200 OK\r\n"          # Status Line
+                b"Content-Type: text/plain\r\n"
+                b"Content-Length: " + str(len(response_body)).encode("utf-8") + b"\r\n"
+                b"\r\n" # Empty line
+                + response_body
+            )    
     elif path.startswith("/user-agent"):
         user_agent = request.split("User-Agent: ")[1].split("\r\n")[0]
         response_body = user_agent.encode("utf-8")
